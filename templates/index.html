@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flashcards</title>
+    <style>
+        /* Add some basic styles */
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+<h1>Flashcards</h1>
+<div class="button-container">
+    <button class="button" onclick="addFlashcard()">Add Flashcard</button>
+</div>
+<table id="flashcards-table">
+    <tr>
+        <th>Deck ID</th>
+        <th>Question</th>
+        <th>Answer</th>
+        <th>Actions</th>
+    </tr>
+</table>
+
+<script>
+    // Function to fetch the flashcards from the API
+    function fetchFlashcards() {
+        fetch('/api/flashcards')
+            .then(response => response.json())
+            .then(data => displayFlashcards(data))
+            .catch(error => console.error(error));
+    }
+
+    // Function to display the flashcards in the table
+    function displayFlashcards(flashcards) {
+        const table = document.getElementById('flashcards-table');
+        table.innerHTML = `
+                <tr>
+                    <th>Deck ID</th>
+                    <th>Question</th>
+                    <th>Answer</th>
+                    <th>Actions</th>
+                </tr>
+            `;
+
+        flashcards.forEach(flashcard => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                    <td>${flashcard.deckId}</td>
+                    <td>${flashcard.question}</td>
+                    <td>${flashcard.answer}</td>
+                    <td>
+                        <button onclick="updateFlashcard(${flashcard.id})">Update</button>
+                        <button onclick="deleteFlashcard(${flashcard.id})">Delete</button>
+                    </td>
+                `;
+            table.appendChild(row);
+        });
+    }
+
+    // Function to add a flashcard
+    function addFlashcard() {
+        const deckId = prompt('Enter Deck ID:');
+        const question = prompt('Enter Question:');
+        const answer = prompt('Enter Answer:');
+
+        fetch('/api/flashcards', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                deckId: deckId,
+                question: question,
+                answer: answer
+            })
+        })
+            .then(response => response.json())
+            .then(() => {
+                fetchFlashcards(); // Fetch and display the updated flashcards
+            })
+            .catch(error => console.error(error));
+    }
+
+    // Function to delete a flashcard
+    function deleteFlashcard(flashcardId) {
+        if (confirm('Are you sure you want to delete this flashcard?')) {
+            fetch(`/api/flashcards/${flashcardId}`, {
+                method: 'DELETE'
+            })
+                .then(() => {
+                    fetchFlashcards(); // Fetch and display the updated flashcards
+                })
+                .catch(error => console.error(error));
+        }
+    }
+
+    // Function to update a flashcard
+    function updateFlashcard(flashcardId) {
+        const question = prompt('Enter new Question:');
+        const answer = prompt('Enter new Answer:');
+
+        fetch(`/api/flashcards/${flashcardId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                question: question,
+                answer: answer
+            })
+        })
+            .then(() => {
+                fetchFlashcards(); // Fetch and display the updated flashcards
+            })
+            .catch(error => console.error(error));
+    }
+
+    // Fetch and display the flashcards when the page loads
+    fetchFlashcards();
+</script>
+</body>
+</html>
